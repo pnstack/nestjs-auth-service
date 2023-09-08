@@ -22,24 +22,24 @@ services:
       - 6379:6379
     volumes:
       - redis-data:/data
-  # api:
-  #   image: ghcr.io/pnstack/template-nest-prisma:release
-  #   depends_on:
-  #     - postgres
-  #     - redis
-  #   restart: on-failure
-  #   ports:
-  #     - 4005:4005
-  #   volumes:
-  #     - /app/node_modules
-  #     - .:/app
-  #   env_file:
-  #     - .env
-  #   environment:
-  #     - REDIS_HOST=redis
-  #     - DB_HOST=postgres
-  #     - DATABASE_URL=postgresql://prisma:topsecret@postgres:5432/postgres?schema=public&sslmode=prefer
-  #   command: npm run dev
+  api:
+    image: ghcr.io/pnstack/nestjs-auth-service:release
+    container_name: nestjs-auth-service
+    depends_on:
+      - postgres
+      - redis
+    restart: on-failure
+    ports:
+      - 4005:4005
+    # volumes:
+    #   - /app/node_modules
+    #   - .:/app
+    env_file:
+      - .env
+    environment:
+      - REDIS_HOST=redis
+      - DB_HOST=postgres
+      - DATABASE_URL=postgresql://prisma:pd8cDXMA@postgres:5432/postgres?schema=public&sslmode=prefer
 volumes:
   redis-data:
   postgres-data:
