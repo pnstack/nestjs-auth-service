@@ -24,6 +24,7 @@ services:
       - redis-data:/data
   api:
     image: ghcr.io/pnstack/nestjs-auth-service:release
+    container_name: nestjs-auth-service
     depends_on:
       - postgres
       - redis

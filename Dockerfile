@@ -23,6 +23,7 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/public ./public
 # COPY --from=builder /app/templates ./templates
 
+COPY --from=builder /app/prisma ./prisma
 
 EXPOSE 4005
 CMD [ "npm", "run", "start:prod" ]
