@@ -1,0 +1,70 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+input ChangePasswordInput {
+  newPassword: String!
+  oldPassword: String!
+}
+
+input ForgotPasswordInput {
+  email: String!
+}
+
+input LoginInput {
+  email: String!
+  password: String!
+}
+
+type Mutation {
+  changePassword(input: ChangePasswordInput!): String!
+  forgotPassword(input: ForgotPasswordInput!): String!
+  login(input: LoginInput!): Token!
+  resetPassword(input: ResetPasswordInput!): String!
+  signup(input: SignupInput!): Token!
+}
+
+type Query {
+  Role: [Role!]!
+  me: User!
+}
+
+input ResetPasswordInput {
+  password: String!
+  token: String!
+}
+
+type Role {
+  description: String
+  name: String!
+}
+
+input SignupInput {
+  email: String!
+  password: String!
+}
+
+type Token {
+  accessToken: String!
+  refreshToken: String!
+}
+
+type User {
+  address: String
+  bio: String
+  email: String!
+  fullName: String
+  gender: Boolean
+  id: Int!
+  password: String
+  phone: String
+  picture: String
+  roles: [String!]
+  userRole: [UserRole!]
+}
+
+type UserRole {
+  id: Int!
+  roleName: String!
+  userId: Int!
+}
