@@ -1,0 +1,88 @@
+version: '3'
+
+services:
+  kong-postgres:
+    container_name: kong-postgres
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: kong
+      POSTGRES_DB: kong
+      POSTGRES_PASSWORD: kong123456
+    volumes:
+      - kong_db_data:/var/lib/postgresql/data
+    restart: always
+    networks:
+      - kong-net
+
+  kong-migrations:
+    image: kong:3.1.1-alpine
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: kong-postgres
+      KONG_PG_PORT: 5432
+      KONG_PG_USER: kong
+      KONG_PG_PASSWORD: kong123456
+      KONG_PG_DATABASE: kong
+    command: sh -c "kong migrations bootstrap && kong migrations up"
+    restart: on-failure:5
+    depends_on:
+      - kong-postgres
+    networks:
+      - kong-net
+
+  kong:
+    image: kong:3.1.1-alpine
+    environment:
+      LC_CTYPE: en_US.UTF-8
+      LC_ALL: en_US.UTF-8
+      KONG_NGINX_PROXY_PROXY_IGNORE_CLIENT_ABORT: "on"
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: kong-postgres
+      KONG_PG_PORT: 5432
+      KONG_PG_DATABASE: kong
+      KONG_PG_USER: kong
+      KONG_PG_PASSWORD: kong123456
+      # KONG_DNS_RESOLVER: 10.0.0.224:8600
+      KONG_DNS_STATE_TTL: 6
+      KONG_LOG_LEVEL: "error"
+      KONG_HEADERS: "off"
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001, 0.0.0.0:8444 ssl
+      # KONG_PREFIX: /var/run/kong
+    ports:
+      - 8180:8000
+      - 8581:8001
+    depends_on:
+      - kong-migrations
+    # volumes:
+    #   - kong_prefix_vol:/var/run/kong
+    #   - kong_tmp_vol:/tmp
+    restart: always
+    networks:
+      - kong-net
+
+  konga:
+    image: pantsel/konga
+    restart: always
+    ports:
+      - 8182:1338
+    environment:
+      - NODE_ENV=develop
+      - NO_AUTH=true
+    depends_on:
+      - kong-postgres
+      - kong
+    networks:
+      - kong-net
+
+networks:
+  kong-net:
+    driver: bridge
+
+volumes:
+  kong_db_data:
+  # kong_prefix_vol:
+  # kong_tmp_vol:

@@ -1,10 +1,9 @@
+import { SubEventName, SubEventNameType } from './subscription-name';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { RedisPubSub } from 'graphql-redis-subscriptions';
 import { PubSub, PubSubEngine } from 'graphql-subscriptions';
 import { Redis } from 'ioredis';
-
-import { SubEventName, SubEventNameType } from './subscription-name';
 
 @Injectable()
 export class PubSubService {

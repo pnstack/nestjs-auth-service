@@ -1,9 +1,6 @@
 import { ArgumentsHost, Catch, HttpException, HttpServer, HttpStatus } from '@nestjs/common';
 import { BaseExceptionFilter } from '@nestjs/core';
-import {
-  // @ts-ignore
-  Prisma,
-} from '@prisma/client';
+import { Prisma } from '@/shared/prisma';
 import { Response } from 'express';
 
 export type ErrorCodesStatusMapping = {

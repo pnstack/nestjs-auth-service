@@ -1,8 +1,7 @@
-import { Parent, ResolveField, Resolver } from '@nestjs/graphql';
 import { User } from './entities/User';
 import { UserRole } from './entities/UserRole';
 import { UsersService } from './users.service';
-
+import { Parent, ResolveField, Resolver } from '@nestjs/graphql';
 
 @Resolver(() => User)
 export class UserResolver {

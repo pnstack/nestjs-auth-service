@@ -1,0 +1,12 @@
+curl -X POST 'https://api.novu.co/v1/events/trigger' \
+-H 'Authorization: ApiKey 3a2cb69dd1fb63ac7a99a83c3b109713' \
+-H 'Content-Type: application/json' \
+-d '{
+  "name": "lab",
+  "to": {
+    "subscriberId": "3374ee00-599b-4ffe-98c3-2cec4872119a",
+    "email": "nguyen.vti@nvnio.edu.vn"
+  },
+  "payload": {}
+}'
+  

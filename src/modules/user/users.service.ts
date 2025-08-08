@@ -1,15 +1,95 @@
-import { Injectable } from '@nestjs/common';
-
-import { PasswordService } from '@/modules/auth/password.service';
+import { NatsService } from '../../shared/core/transporter/nats/nat.service';
+import { RabbitMqService } from '../../shared/core/transporter/rabbitmq/rabbitmq.service';
+import { RedisService } from '../../shared/core/transporter/redis/redis.service';
+import { PasswordService } from '@/modules/auth/services/password.service';
+import { KafkaService } from '@/shared/core/transporter/kafka/kafka.service';
 import { Prisma, PrismaService } from '@/shared/prisma';
-
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import { Interval } from '@nestjs/schedule';
 
 @Injectable()
-export class UsersService  {
-  constructor(protected prisma: PrismaService, protected passwordService: PasswordService) {
+export class UsersService implements OnModuleInit {
+  constructor(
+    protected prisma: PrismaService,
+    protected passwordService: PasswordService,
+
+    private readonly rabbitMqService: RabbitMqService,
+    private readonly redisService: RedisService,
+    private readonly natsService: NatsService
+  ) {}
+
+  onModuleInit() {
+    // this.rabbitMqService.consume(
+    //   'user-service',
+    //   async (msg) => {
+    //     await new Promise((resolve) => setTimeout(resolve, 1000));
+    //     const data = JSON.parse(msg.content.toString());
+    //     console.log('Received message:', data);
+    //   },
+    //   {
+    //     noAck: false,
+    //   }
+    // );
+
+    // this.rabbitMqService.consume(
+    //   'user-service',
+    //   async (msg) => {
+    //     await new Promise((resolve) => setTimeout(resolve, 1000));
+    //     const data = JSON.parse(msg.content.toString());
+    //     console.log('Received message 2:', data);
+    //   },
+    //   {
+    //     noAck: false,
+    //   }
+    // );
+
+    this.natsService.subscribe('user-service', async (message) => {
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+      console.log('Received message nats:', message);
+    });
+
+    // this.redisService.subscribe('user-service', (message) => {
+    //   console.log('Received message:', message);
+    // });
+
+    // this.redisService.subscribe('user-service2', (message) => {
+    //   console.log('Received message: 2', message);
+    // });
+
+    // this.kafkaService.subscribe(
+    //   'user-service',
+    //   async (message) => {
+    //     // await new Promise((resolve) => setTimeout(resolve, 5000));
+    //     console.log('Received message kafka:', message);
+    //   },
+    //   {
+    //     groupId: 'user-service1',
+    //   }
+    // );
+
+    // this.kafkaService.subscribe(
+    //   'user-service',
+    //   async (message) => {
+    //     // await new Promise((resolve) => setTimeout(resolve, 5000));
+    //     console.log('Received message kafka 2:', message);
+    //   },
+    //   {
+    //     groupId: 'user-service2',
+    //   }
+    // );
   }
 
-  async getUserRole(id: number) {
+  @Interval(100)
+  async ping() {
+    // this.redisService.publish('user-service', { id: new Date() });
+    // this.natsService.publish('user-service', { id: new Date() });
+    // this.kafkaService.publish('user-service', {
+    //   id: new Date(),
+    //   name: 'test',
+    // });
+  }
+
+  async getUserRole(id: string) {
     return this.prisma.user
       .findUnique({
         where: {
@@ -49,7 +129,7 @@ export class UsersService  {
     });
   }
 
-  async updateOrCreateRoles(userId: number, roles: string[]) {
+  async updateOrCreateRoles(userId: string, roles: string[]) {
     const user = await this.prisma.user.findUnique({
       where: {
         id: userId,
@@ -99,7 +179,7 @@ export class UsersService  {
   async findUser(id: string) {
     const user = await this.prisma.user.findUnique({
       where: {
-        id: parseInt(id),
+        id: id,
       },
       include: {
         UserRole: true,

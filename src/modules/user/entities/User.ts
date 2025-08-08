@@ -1,18 +1,17 @@
+import { UserRole } from './UserRole';
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
-
-import { UserRole } from './UserRole';
 
 @ObjectType()
 class User {
   @ApiProperty({
     required: false,
-    type: Number,
+    type: String,
   })
   @IsOptional()
-  @Field(() => Number)
-  id!: number;
+  @Field(() => String)
+  id!: string;
 
   @ApiProperty({
     required: true,

@@ -1,0 +1,23 @@
+id: stock_price
+namespace: company.team
+
+tasks:
+  - id: hello
+    type: io.kestra.plugin.core.log.Log
+    message: Hello World! 🚀
+    
+  - id: send_data
+    type: io.kestra.plugin.core.http.Request
+    uri: https://dummyjson.com/products
+    method: GET
+    contentType: application/json
+
+  - id: get_price
+    type: io.kestra.plugin.core.http.Request
+    uri: https://vcbs.com.vn/api/v1/ttpt-companies/VCB?locale=vi
+    method: GET
+    contentType: application/json
+  
+  - id: log
+    type: io.kestra.plugin.core.log.Log
+    message: Hello {{outputs.get_price.outputFiles}}

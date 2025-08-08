@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@/shared/prisma';
 
 function exclude(user, ...keys) {
   for (const key of keys) {

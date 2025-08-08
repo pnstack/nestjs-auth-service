@@ -1,6 +1,5 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiExtraModels, ApiQuery, ApiQueryOptions, getSchemaPath } from '@nestjs/swagger';
-
 import 'reflect-metadata';
 
 const generateApiQueryObject = (

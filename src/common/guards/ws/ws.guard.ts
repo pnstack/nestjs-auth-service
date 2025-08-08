@@ -1,10 +1,9 @@
+import { ROLES_KEY } from '@/common/decorators/roles.decorator';
+import { AuthService } from '@/modules/auth/auth.service';
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { WsException } from '@nestjs/websockets';
 import { Socket } from 'socket.io';
-
-import { ROLES_KEY } from '@/common/decorators/roles.decorator';
-import { AuthService } from '@/modules/auth/auth.service';
 
 @Injectable()
 export class WsGuard implements CanActivate {

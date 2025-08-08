@@ -1,45 +1,116 @@
-version: '3.8'
 services:
   postgres:
-    image: postgres:13
+    image: postgres:16
     restart: on-failure
     ports:
-      - 5432:5432
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}
     environment:
-      - POSTGRES_USER=prisma
-      - POSTGRES_PASSWORD=pd8cDXMA
-      - POSTGRES_DB=postgres
-      - DB_PORT=5432
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - DB_PORT=${POSTGRES_PORT}
       - DB_SCHEMA=public
     volumes:
       - postgres-data:/var/lib/postgresql/data
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - '${MONGODB_PORT:-27017}:27017'
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGODB_USER:-admin}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_PASSWORD:-password}
+    restart: unless-stopped
 
   redis:
     image: redis/redis-stack:latest
     restart: on-failure
     ports:
-      - 8001:8001
-      - 6379:6379
+      - 8011:8001
+      - ${REDIS_PORT}:6379
     volumes:
       - redis-data:/data
-  api:
-    image: ghcr.io/pnstack/nestjs-auth-service:release
-    container_name: nestjs-auth-service
-    depends_on:
-      - postgres
-      - redis
-    restart: on-failure
-    ports:
-      - 4005:4005
-    # volumes:
-    #   - /app/node_modules
-    #   - .:/app
-    env_file:
-      - .env
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
     environment:
-      - REDIS_HOST=redis
-      - DB_HOST=postgres
-      - DATABASE_URL=postgresql://prisma:pd8cDXMA@postgres:5432/postgres?schema=public&sslmode=prefer
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - 22181:2181
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - zookeeper
+    ports:
+      - ${KAFKA_PORT}:9092
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,OUTSIDE://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,OUTSIDE://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_NUM_PARTITIONS: 1
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 1
+      KAFKA_MIN_INSYNC_REPLICAS: 1
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - 8181:8080
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+
+  # nestjs-auth-service:
+  #   image: ghcr.io/pnstack/nestjs-auth-service:release
+  #   container_name: nestjs-auth-service
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   depends_on:
+  #     - postgres
+  #     - redis
+  #   restart: on-failure
+  #   ports:
+  #     - 4005:4005
+  #   volumes:
+  #     - /app/node_modules
+  #     - .:/app
+  #   env_file:
+  #     - .env
+  #   environment:
+  #     - REDIS_HOST=redis
+  #     - DB_HOST=postgres
+  #     - DATABASE_URL=postgresql://prisma:pd8cDXMA@postgres:5432/postgres?schema=public&sslmode=prefer
+  scylla:
+    image: scylladb/scylla
+    container_name: scylla-node1
+    ports:
+      - '9042:9042' # CQL
+      - '7000:7000' # intra-node communication
+      - '7001:7001' # TLS intra-node
+      - '7199:7199' # JMX
+      - '10000:10000' # Alternator (DynamoDB API)
+    volumes:
+      - scylla-data:/var/lib/scylla
+    environment:
+      - SCYLLA_CLUSTER_NAME=my-scylla-cluster
+      - SCYLLA_DC=dc1
+      - SCYLLA_RACK=rack1
+
 volumes:
   redis-data:
   postgres-data:
+  mongodb_data:
+  scylla-data:

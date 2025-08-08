@@ -1,0 +1,191 @@
+{
+	"NestJS Mongoose Custom Model": {
+		"prefix": "dbmodel",
+		"body": [
+			"import { BaseSchema } from '../common/base.model';",
+			"import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';",
+			"",
+			"@Schema()",
+			"export class ${1:ModelName} extends BaseSchema {",
+			"  $2// Add more fields here",
+			"}",
+			"",
+			"export type ${1:ModelName}Document = ${1:ModelName} & Document;",
+			"export const ${1:ModelName}Schema = SchemaFactory.createForClass(${1:ModelName});"
+		],
+		"description": "NestJS Mongoose model with customizable class name and fields"
+	},
+	"MongoDB Model Field": {
+		"prefix": "dbfield",
+		"description": "Add a MongoDB model field with @Prop decorator",
+		"scope": "typescript",
+		"body": [
+			"@Prop({ type: ${2:String} })",
+			"${1:fieldName}: ${2:string};"
+		]
+	},
+	"Rabbit Mq Client": {
+		"prefix": "mqclient",
+		"description": "Add a MongoDB model field with @Prop decorator",
+		"scope": "typescript",
+		"body": [
+			"@Prop({ required: ${1:true}, type: ${2:String} })",
+			"${3:fieldName}: ${2:String};"
+		]
+	},	
+		"NestJS Mongoose Repository": {
+			"prefix": "dbrepo",
+			"description": "NestJS Mongoose repository class",
+			"scope": "typescript",
+			"body": [
+				"import { BaseRepository } from '../common/base.abstract.repository';",
+				"import { ${1:ModelName}, ${1:ModelName}Document } from '../models/${2:model-file-name}.model';",
+				"import { Inject, Injectable } from '@nestjs/common';",
+				"import { InjectModel } from '@nestjs/mongoose';",
+				"import { Model } from 'mongoose';",
+				"",
+				"@Injectable()",
+				"export class ${1:ModelName}Repository extends BaseRepository<${1:ModelName}Document> {",
+				"  constructor(",
+				"    @InjectModel(${1:ModelName}.name) private readonly ${3:modelInstance}Model: Model<${1:ModelName}Document>",
+				"  ) {",
+				"    super(${3:modelInstance}Model);",
+				"  }",
+				"}"
+			]
+		},
+
+	"NestJS DTO Class": {
+		"prefix": "nest-dto",
+		"body": [
+			"import { IsString, IsNumber, IsBoolean, IsOptional } from 'class-validator';",
+			"import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';",
+			"",
+			"export class ${1:${TM_FILENAME_BASE}}Dto {",
+			"  $0",
+			"}"
+		],
+		"description": "Generate a NestJS DTO class with Swagger decorators using the file name as the class name prefix"
+	},
+
+
+
+	"NestJS DTO Optional Property": {
+		"prefix": "dto-prop-opt",
+		"body": [
+			"@IsOptional()",
+			"@IsString()",
+			"${1:propertyName}?: ${2:string};"
+		],
+		"description": "Creates an optional DTO property with validation"
+	},
+
+	"Swagger Field with Validation": {
+		"prefix": "swagger-field",
+		"body": [
+			"@ApiProperty()",
+			"@Is${1|String,Number,Boolean,Email,UUID,Date,Array|}()",
+			"${2:fieldName}: ${3|string,number,boolean,Date,any[]|};",
+			"$0"
+		],
+		"description": "Add a field with Swagger ApiProperty and class-validator decorators"
+	},
+	"Swagger Optional Field with Validation": {
+		"prefix": "swagger-optional",
+		"body": [
+			"@ApiPropertyOptional()",
+			"@IsOptional()",
+			"@Is${1|String,Number,Boolean,Email,UUID,Date,Array|}()",
+			"${2:fieldName}?: ${3|string,number,boolean,Date,any[]|};",
+			"$0"
+		],
+		"description": "Add an optional field with Swagger ApiPropertyOptional and class-validator decorators"
+	},
+	
+	"NestJS Controller": {
+		"prefix": "nest-controller",
+		"body": [
+			"import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/common';",
+			"import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';",
+			"",
+			"@ApiTags('${1:${TM_FILENAME_BASE/(.*)Controller$/$1/i}}')",
+			"@Controller('${2:${TM_FILENAME_BASE/(.*)Controller$/${1:/downcase}/i}}')",
+			"export class ${3:${TM_FILENAME_BASE}}Controller {",
+			"  constructor() {}",
+			"",
+			"  $0",
+			"}"
+		],
+		"description": "Generate a NestJS controller with Swagger decorators"
+	},
+
+	"NestJS GET Endpoint": {
+		"prefix": "nest-get",
+		"body": [
+			"@ApiOperation({ summary: '${1:Get operation description}' })",
+			"@ApiResponse({ status: 200, description: '${2:Success response description}' })",
+			"@Get('${3:}')",
+			"async ${4:methodName}(${5:}) {",
+			"  $0",
+			"}"
+		],
+		"description": "Generate a GET endpoint with Swagger documentation"
+	},
+	"NestJS POST Endpoint": {
+		"prefix": "nest-post",
+		"body": [
+			"@ApiOperation({ summary: '${1:Create operation description}' })",
+			"@ApiResponse({ status: 201, description: '${2:Success response description}' })",
+			"@Post('${3:}')",
+			"async ${4:methodName}(@Body() ${5:dto}: ${6:CreateDto}) {",
+			"  $0",
+			"}"
+		],
+		"description": "Generate a POST endpoint with Swagger documentation"
+	},
+	"NestJS PUT Endpoint": {
+		"prefix": "nest-put",
+		"body": [
+			"@ApiOperation({ summary: '${1:Update operation description}' })",
+			"@ApiResponse({ status: 200, description: '${2:Success response description}' })",
+			"@Put('${3::id}')",
+			"async ${4:methodName}(@Param('id') id: string, @Body() ${5:dto}: ${6:UpdateDto}) {",
+			"  $0",
+			"}"
+		],
+		"description": "Generate a PUT endpoint with Swagger documentation"
+	},
+	"NestJS DELETE Endpoint": {
+		"prefix": "nest-delete",
+		"body": [
+			"@ApiOperation({ summary: '${1:Delete operation description}' })",
+			"@ApiResponse({ status: 200, description: '${2:Success response description}' })",
+			"@Delete('${3::id}')",
+			"async ${4:methodName}(@Param('id') id: string) {",
+			"  $0",
+			"}"
+		],
+		"description": "Generate a DELETE endpoint with Swagger documentation"
+	},
+	"NestJS PATCH Endpoint": {
+		"prefix": "nest-patch",
+		"body": [
+			"@ApiOperation({ summary: '${1:Partial update operation description}' })",
+			"@ApiResponse({ status: 200, description: '${2:Success response description}' })",
+			"@Patch('${3::id}')",
+			"async ${4:methodName}(@Param('id') id: string, @Body() ${5:dto}: ${6:UpdateDto}) {",
+			"  $0",
+			"}"
+		],
+		"description": "Generate a PATCH endpoint with Swagger documentation"
+	},
+
+	"cst": {
+		"prefix": "cst",
+		"description": "cst",
+		"scope": "typescript",
+		"body": [
+			"constructor() {}"
+		]
+	}
+}

@@ -1,29 +1,26 @@
+import { NovuService } from '../novu/novu.service';
+import { LoginRequestDto } from './dto/request/login-request.dto';
+import { ChangePasswordInput } from './dto/request/reset-password.input';
+import { Token } from './entities/Token';
+import { PasswordService } from './services/password.service';
+import { SecurityConfig } from '@/common/configs/config.interface';
+import { User } from '@/modules/user/entities/User';
+import { UsersService } from '@/modules/user/users.service';
+import { Prisma, PrismaService, UserRole } from '@/shared/prisma';
+import { generateRandomPassword } from '@/utils/tool';
 import {
   BadRequestException,
   ConflictException,
   Injectable,
   Logger,
-  LoggerService,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 
-import { SecurityConfig } from '@/common/configs/config.interface';
-import { User } from '@/modules/user/entities/User';
-import { Prisma, PrismaService, UserRole } from '@/shared/prisma';
-import { generateRandomPassword } from '@/utils/tool';
-
-import { UsersService } from '@/modules/user/users.service';
-
-import { LoginInput } from './dtos/inputs/LoginInput';
-import { ChangePasswordInput, ResetPasswordInput } from './dtos/inputs/reset-password.input';
-import { Token } from './entities/Token';
-import { PasswordService } from './password.service';
-
 export type UserPayload = {
-  userId: number;
+  userId: string;
   role: string[];
 };
 
@@ -37,6 +34,7 @@ export class AuthService {
     private readonly passwordService: PasswordService,
     private readonly configService: ConfigService,
     private readonly userService: UsersService,
+    private readonly novuService: NovuService
   ) {}
 
   /**
@@ -50,9 +48,9 @@ export class AuthService {
    */
   async createUser(payload: Prisma.UserCreateInput) {
     const hashedPassword = await this.passwordService.hashPassword(payload.password);
-    
+
     try {
-      this.logger.log(`New user: ${payload.email}`)
+      this.logger.log(`New user: ${payload.email}`);
       return await this.prisma.$transaction(async (tx) => {
         const user = await tx.user.create({
           data: {
@@ -67,6 +65,8 @@ export class AuthService {
             roleName: 'user',
           },
         });
+
+        this.novuService.createSubscriber(user);
 
         return this.generateTokens({
           userId: user.id,
@@ -156,7 +156,7 @@ export class AuthService {
     return user;
   }
 
-  async login(loginInput: LoginInput): Promise<Token> {
+  async login(loginInput: LoginRequestDto, passwordLess?: boolean): Promise<any> {
     const { email, password } = loginInput;
 
     const user = await this.prisma.user.findUnique({
@@ -178,18 +178,24 @@ export class AuthService {
       throw new NotFoundException(`Email or password is incorrect`);
     }
     // map role to string
+    if (!passwordLess) {
+      const passwordValid = await this.passwordService.validatePassword(password, user.password);
 
-    const passwordValid = await this.passwordService.validatePassword(password, user.password);
-
-    if (!passwordValid) {
-      throw new BadRequestException('Invalid password');
+      if (!passwordValid) {
+        throw new BadRequestException('Invalid password');
+      }
     }
+
     const userRole: string[] = user.UserRole.map((role) => role.roleName);
     const payload: UserPayload = {
       userId: user.id,
       role: userRole,
     };
-    return this.generateTokens(payload);
+
+    return {
+      ...this.generateTokens(payload),
+      user: user,
+    };
   }
 
   getUserRoles(
@@ -200,14 +206,44 @@ export class AuthService {
     return user.UserRole.map((role) => role.roleName);
   }
 
-  async validateUser(userId: number): Promise<any> {
-    return await this.prisma.user.findUnique({
+  async validateUser(userId: string): Promise<any> {
+    const user = await this.prisma.user.findUnique({
       where: { id: userId },
       include: {
-        UserRole: true,
+        UserRole: {
+          include: {
+            Role: {
+              include: {
+                RolePermission: {
+                  include: {
+                    Permission: true,
+                  },
+                },
+              },
+            },
+          },
+        },
         Provider: true,
-      }
+      },
     });
+
+    // extract roles
+    const roles = user.UserRole.map((role) => role.roleName);
+    const permissions = user.UserRole.flatMap((role) =>
+      role.Role.RolePermission.map((permission) => permission.Permission.name)
+    );
+    const permissionsSet = new Set(permissions);
+    const permissionsArray = Array.from(permissionsSet);
+    const userWithRoles = {
+      ...user,
+      roles,
+      permissions: permissionsArray,
+    };
+
+    delete userWithRoles.password;
+    delete userWithRoles.UserRole;
+
+    return userWithRoles;
   }
 
   generateTokens(payload: UserPayload): Token {
@@ -219,12 +255,12 @@ export class AuthService {
 
   private generateAccessToken(payload: UserPayload): string {
     const p = {
-      ...payload
+      ...payload,
     };
     return this.jwtService.sign(p);
   }
 
-  private generateRefreshToken(payload: { userId: number }): string {
+  private generateRefreshToken(payload: { userId: string }): string {
     const securityConfig = this.configService.get<SecurityConfig>('security');
     return this.jwtService.sign(payload, {
       secret: this.configService.get('JWT_REFRESH_SECRET'),

@@ -11,7 +11,7 @@ input ForgotPasswordInput {
   email: String!
 }
 
-input LoginInput {
+input LoginRequestDto {
   email: String!
   password: String!
 }
@@ -19,9 +19,9 @@ input LoginInput {
 type Mutation {
   changePassword(input: ChangePasswordInput!): String!
   forgotPassword(input: ForgotPasswordInput!): String!
-  login(input: LoginInput!): Token!
+  login(input: LoginRequestDto!): Token!
   resetPassword(input: ResetPasswordInput!): String!
-  signup(input: SignupInput!): Token!
+  signup(input: SignupRequestDto!): Token!
 }
 
 type Query {
@@ -39,7 +39,7 @@ type Role {
   name: String!
 }
 
-input SignupInput {
+input SignupRequestDto {
   email: String!
   password: String!
 }
@@ -55,7 +55,7 @@ type User {
   email: String!
   fullName: String
   gender: Boolean
-  id: Int!
+  id: String!
   password: String
   phone: String
   picture: String
@@ -66,5 +66,5 @@ type User {
 type UserRole {
   id: Int!
   roleName: String!
-  userId: Int!
+  userId: String!
 }

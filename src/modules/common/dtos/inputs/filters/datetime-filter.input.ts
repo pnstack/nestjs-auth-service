@@ -2,6 +2,7 @@ import { Field, InputType } from '@nestjs/graphql';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsOptional } from 'class-validator';
+
 @InputType({
   isAbstract: true,
   description: undefined,

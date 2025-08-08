@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  // previewFeatures = ["tracing"]
 }
 
 generator dbml {
@@ -22,33 +23,43 @@ model AuthProvider {
 model AuthProviderUser {
   id             Int           @id @default(autoincrement())
   AuthProviderId String?
-  userId         Int?
+  userId         String?
   createAt       DateTime      @default(now())
   AuthProvider   AuthProvider? @relation(fields: [AuthProviderId], references: [providerId])
   User           User?         @relation(fields: [userId], references: [id])
 }
 
 model User {
-  id           Int                @id @default(autoincrement())
-  email        String             @unique
-  password     String
+  id           String             @id @default(dbgenerated("gen_random_uuid()"))
+  email        String?            @unique
+  password     String?
   fullName     String?
   address      String?
   avatarFileId Int?
   dateOfBirth  DateTime?
-  phone        String?
+  phone        String?            @unique
   bio          String?
   gender       Boolean?
   picture      String?
+  isEmailVerified Boolean         @default(false)
+  isPhoneVerified Boolean         @default(false)
+  twoFactorEnabled Boolean        @default(false)
+  
+  // Relations
   Provider     AuthProviderUser[]
   UserRole     UserRole[]
+  Sessions     Session[]
+  WalletAccounts WalletAccount[]
+  PasskeyCredentials PasskeyCredential[]
+  OtpTokens    OtpToken[]
 
   createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt
 }
 
 model UserRole {
   id       Int    @id @default(autoincrement())
-  userId   Int
+  userId   String
   roleName String
   Role     Role   @relation(fields: [roleName], references: [name])
   User     User   @relation(fields: [userId], references: [id])
@@ -57,7 +68,119 @@ model UserRole {
 }
 
 model Role {
-  name        String     @id
-  description String?
-  UserRole    UserRole[]
+  name           String           @id
+  description    String?
+  UserRole       UserRole[]
+  RolePermission RolePermission[]
+}
+
+// Permission model for fine-grained access control (e.g., "read:user", "delete:post")
+model Permission {
+  name           String           @id
+  description    String?
+  RolePermission RolePermission[]
+}
+
+// Join table to assign permissions to roles (many-to-many)
+model RolePermission {
+  id             Int        @id @default(autoincrement())
+  roleName       String
+  permissionName String
+  Role           Role       @relation(fields: [roleName], references: [name])
+  Permission     Permission @relation(fields: [permissionName], references: [name])
+
+  @@unique([roleName, permissionName])
+}
+
+// Session management for comprehensive auth tracking
+model Session {
+  id        String   @id @default(dbgenerated("gen_random_uuid()"))
+  userId    String
+  token     String   @unique
+  type      SessionType @default(ACCESS)
+  deviceInfo String?
+  ipAddress String?
+  userAgent String?
+  isActive  Boolean  @default(true)
+  expiresAt DateTime
+  
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum SessionType {
+  ACCESS
+  REFRESH
+  OTP
+  RESET_PASSWORD
+}
+
+// OTP tokens for various authentication scenarios
+model OtpToken {
+  id        String    @id @default(dbgenerated("gen_random_uuid()"))
+  userId    String?
+  identifier String   // email or phone
+  token     String
+  type      OtpType
+  attempts  Int       @default(0)
+  maxAttempts Int     @default(3)
+  isUsed    Boolean   @default(false)
+  expiresAt DateTime
+  
+  User      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime  @default(now())
+  
+  @@unique([identifier, type])
+}
+
+enum OtpType {
+  LOGIN
+  REGISTER
+  PHONE_VERIFICATION
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+  TWO_FACTOR
+}
+
+// Wallet accounts for blockchain authentication
+model WalletAccount {
+  id        String      @id @default(dbgenerated("gen_random_uuid()"))
+  userId    String
+  address   String      @unique
+  type      WalletType
+  isVerified Boolean    @default(false)
+  isPrimary Boolean     @default(false)
+  metadata  Json?       // Additional wallet metadata
+  
+  User      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+enum WalletType {
+  ETHEREUM
+  BITCOIN
+  POLYGON
+  BSC
+}
+
+// Passkey credentials for WebAuthn
+model PasskeyCredential {
+  id            String  @id @default(dbgenerated("gen_random_uuid()"))
+  userId        String
+  credentialId  String  @unique
+  publicKey     String
+  counter       BigInt  @default(0)
+  deviceType    String?
+  backed        Boolean @default(false)
+  transports    Json?   // Array of transports
+  
+  User          User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt     DateTime @default(now())
+  lastUsedAt    DateTime @default(now())
 }

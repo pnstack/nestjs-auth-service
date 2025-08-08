@@ -1,8 +1,8 @@
+import { UserWhereInput } from '../inputs/UserWhereInput';
 import { ArgsType, Field } from '@nestjs/graphql';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
-import { UserWhereInput } from '../inputs/UserWhereInput';
 @ArgsType()
 class UserAggregateArgs {
   @Field(() => UserWhereInput, { nullable: true })

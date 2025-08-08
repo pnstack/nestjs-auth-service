@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@/shared/prisma';
 
 export function bigIntMiddleware(): Prisma.Middleware {
   return async (params, next) => {

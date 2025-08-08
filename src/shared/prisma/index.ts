@@ -2,7 +2,7 @@ import { INestApplication } from '@nestjs/common';
 import { PrismaService } from 'nestjs-prisma';
 
 export * from './prisma.module';
-export * from '@prisma/client';
+export * from './types';
 export { PrismaService };
 
 /**

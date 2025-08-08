@@ -1,9 +1,8 @@
+import { AuthService } from '@/modules/auth/auth.service';
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { GqlExecutionContext } from '@nestjs/graphql';
 import { AuthGuard } from '@nestjs/passport';
-
-import { AuthService } from '@/modules/auth/auth.service';
 
 @Injectable()
 export class GqlAuthGuard extends AuthGuard('jwt') {

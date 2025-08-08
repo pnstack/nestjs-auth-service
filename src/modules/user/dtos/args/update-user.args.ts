@@ -1,8 +1,7 @@
-import { ArgsType, Field } from '@nestjs/graphql';
-
+import { WhereUniqueUserInput } from '../inputs/UserWhereInput';
 import { CreateUserInput } from '../inputs/create-user.input';
 import { UpdateUserInput } from '../inputs/update-user.input';
-import { WhereUniqueUserInput } from '../inputs/UserWhereInput';
+import { ArgsType, Field } from '@nestjs/graphql';
 
 @ArgsType()
 export class UpdateUserArgs {
